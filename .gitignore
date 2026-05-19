@@ -16,11 +16,12 @@ __pycache__/
 *.swp
 *.swo
 
+# Data files (downloaded from Google Drive)
+*.csv
+
 # Output files
-*.png
 *.jpg
 *.pdf
-*.csv
 
 # OS
 .DS_Store
