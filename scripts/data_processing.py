@@ -122,3 +122,27 @@ def sample_and_split(
     )
 
     return X_train, X_test, y_train, y_test, y_sample
+
+def aggregate_by_airline(flights: pd.DataFrame) -> pd.DataFrame:
+    """
+    Aggregate flight metrics by airline.
+
+    Computes mean values for key performance indicators:
+    - Departure and arrival delays
+    - Cancellation rate
+    - Average distance and air time
+
+    Returns:
+        DataFrame indexed by AIRLINE with aggregated metrics and flight count.
+    """
+    airline_stats = flights.groupby("AIRLINE").agg({
+        "DEPARTURE_DELAY": "mean",
+        "ARRIVAL_DELAY": "mean",
+        "CANCELLED": "mean",
+        "DISTANCE": "mean",
+        "AIR_TIME": "mean",
+    }).fillna(0)
+    
+    airline_stats["flight_count"] = flights["AIRLINE"].value_counts()
+    
+    return airline_stats
