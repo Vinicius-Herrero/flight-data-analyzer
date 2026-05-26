@@ -48,12 +48,22 @@ def clean_data_regression(df: pd.DataFrame) -> pd.DataFrame:
     be late, how late will it be?" — mixing on-time or early arrivals (magnitude = 0)
     would conflate the classification question with the regression magnitude question.
 
+    Outliers above the 99th percentile are removed: delays of 500+ minutes are
+    exceptional events (emergencies, re-routings, ground stops) that no pre-departure
+    feature can predict. Keeping them collapses R² and inflates RMSE without adding
+    model value.
+
     IMPORTANT: ARRIVAL_DELAY is used as the regression target only — it never enters
     as a feature, which would cause direct data leakage.
     """
     df = df[(df["CANCELLED"] == 0) & (df["DIVERTED"] == 0)]
     df = df[df["ARRIVAL_DELAY"] > 0].copy()
     df = df.dropna(subset=["ARRIVAL_DELAY"])
+
+    # Remove extreme outliers: delays above p99 are unpredictable exceptional events
+    cap = df["ARRIVAL_DELAY"].quantile(0.99)
+    df = df[df["ARRIVAL_DELAY"] <= cap].copy()
+
     return df
 
 
@@ -88,7 +98,12 @@ def feature_engineering_regression(
     - PERIOD_OF_DAY: qualitative period (dawn/morning/afternoon/night) to capture
       non-linear time-of-day effects that a linear model can exploit via OHE.
 
-    Returns (X, y) where y = ARRIVAL_DELAY (continuous float in minutes).
+    Target transformation:
+    - log1p(ARRIVAL_DELAY) compresses the right-skewed delay distribution, reduces
+      the influence of large outliers during training, and makes residuals more
+      homoscedastic. Predictions are reverted with expm1() before evaluation.
+
+    Returns (X, y) where y = log1p(ARRIVAL_DELAY).
     """
     df = df.copy()
 
@@ -102,7 +117,7 @@ def feature_engineering_regression(
     df["PERIOD_OF_DAY"] = _assign_period_of_day(df["DEP_HOUR"])
 
     X = df[features_numeric + features_categorical].copy()
-    y = df["ARRIVAL_DELAY"]  # continuous regression target (minutes)
+    y = np.log1p(df["ARRIVAL_DELAY"])  # log-transform: compresses outliers, normalises distribution
 
     X[features_categorical] = X[features_categorical].astype(str)
 
