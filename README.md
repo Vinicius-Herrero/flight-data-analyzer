@@ -34,6 +34,7 @@ flight-data-analyzer/
 │   ├── clustering_elbow_silhouette.png
 │   ├── clustering_market_segmentation.png
 │   ├── clustering_heatmap.png
+│   ├── clustering_iterations.png
 │   └── clustering_inertia_curve.png
 ├── requirements.txt                 # Project dependencies
 ├── .gitignore                       # Git ignore rules
